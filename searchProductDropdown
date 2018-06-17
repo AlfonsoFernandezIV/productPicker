@@ -1,0 +1,66 @@
+<!-- Product Picker DataTable -->
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="searchProductController">
+ 
+    <!-- Loading Spinner Handler/Attributes Start -->
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+    
+    <aura:attribute name="Spinner" type="boolean" default="false" />
+    <!-- Loading Spinner Handler/Attributes End -->
+    
+    <!-- Search Bar Handler/Attributes Start -->
+    <aura:handler event="c:SearchKeyChange" action="{!c.searchKeyChange}" />
+    <aura:attribute name="productsLength" type="String" />
+    <!-- Search Bar Handler/Attributes Stop -->
+    
+    <!-- Product Picker DataTable Attributes Start -->
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}" />
+    <aura:attribute name="productData" type="List" />
+    <aura:attribute name="tableColumns" type="List" />
+    <aura:attribute name="selectedRows" type="List" />
+    <aura:attribute name="enableInfiniteLoading" type="Boolean" default="true"/>
+    <aura:attribute name="rowsToLoad" type="Integer" default="50"/>
+    <aura:attribute name="loadMoreOffset" type="Integer" default="20"/>
+    <aura:attribute name="totalNumberOfRows" type="Integer" default="300"/>
+    <aura:attribute name="loadMoreStatus" type="String" default=""/>
+    <!-- Product Picker DataTable Attributes End -->
+    <ltng:require styles="/resource/slds_resource/assets/styles/salesforce-lightning-design-system.css?v=1" />
+    
+    <!-- Body -->
+    <div class="slds">
+        <!-- Search Bar Start -->
+        <div class="slds-grid">
+            <div class="slds-col slds-align-bottom" style="margin-top: 10px">
+                <input type="text" class="form-control" onchange="{!c.searchKeyChange}" placeholder="Press Enter to Search"/> 
+            </div>
+        </div>
+        <!-- Search Bar Stop -->
+    	<!-- Product Picker Table Start -->
+        <div class="slds-is-relative">
+            <div style="height: 300px">
+                <lightning:datatable aura:id="productTable" data="{!v.productData}"
+                                     columns="{!v.tableColumns}"
+                                     keyField="Id"
+                                     selectedRows="{!v.selectedRows}"
+                                     onrowaction="{!c.handleAction}"
+                                     enableInfiniteLoading="{! v.enableInfiniteLoading }"
+                                     loadMoreOffset="{! v.loadMoreOffset }"
+                                     onloadmore="{! c.loadMoreData }"
+                                     />
+            </div>            
+            {!v.loadMoreStatus}
+        </div>
+        <!-- Product Picker Table Stop -->
+        <!-- Loading Spinner Start -->
+        <aura:if isTrue="{!v.Spinner}">
+            <div aura:id="spinnerId" class="slds-spinner_container">
+                <div class="slds-spinner--brand slds-spinner slds-spinner--large slds-is-relative" role="alert">
+                    <span class="slds-assistive-text">Loading</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </aura:if>
+        <!-- Loading Spinner Stop -->
+    </div>
+</aura:component>
