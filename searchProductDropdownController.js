@@ -1,71 +1,110 @@
 ({
-    doInit: function(component, event, helper) {
-        component.set('v.marketLineTableColumns',[
-            {label: 'Market Line', fieldName: 'MasterLabel', type: 'text'}
-        ]);
-        
-        component.set('v.marketCategoryTableColumns',[
-            {label: 'Market Category', fieldName: 'MasterLabel', type: 'text'}
-        ]);
-        
-        component.set('v.marketFamilyTableColumns',[
-            {label: 'MarketFamily', fieldName: 'MasterLabel', type: 'text'}
-        ]);
-        
-        component.set('v.marketProductTableColumns',[
-            {label: 'MarketProduct', fieldName: 'Name', type: 'text'}
-        ]);
-        
-        helper.getMarketingLines(component);
-        helper.getMarketingCategories(component);
-        helper.getMarketingFamilies(component);
-        helper.getMarketingProducts(component);
-    },
-        
-    // Search Bar
-    Search: function(component, event, helper) {
-        var searchField = component.find('v.searchKeyword');
-        // if value is missing show error message and focus on field
-            helper.SearchHelper(component, event, helper);
+	getMarketingLines: function(component){
+        var action = component.get("c.getMarketLineInfo");
+        action.setCallback(this, function(actionResult){
+            console.log(JSON.stringify(actionResult));
+            component.set("v.marketLineList", actionResult.getReturnValue());
+            //this.createMarketOptions(component, action.getReturnValue(), "v.marketLineOptions");
+        })
+        $A.enqueueAction(action);
     },
     
-    // Called by event aura:waiting
-    showSpinner: function(component, event, helper) {
-        // make Spinner attribute true for display Spinner
-        component.set("v.Spinner", true);
+    getMarketingCategories: function(component){
+        var action = component.get("c.getMarketCategoryInfo");
+        var marketLine = component.get("v.marketLine");
+        console.log("marketLine" + marketLine);
+        action.setParams({
+            'marketLine': marketLine
+        });
+        action.setCallback(this, function(actionResult){
+            console.log(JSON.stringify(actionResult));
+            component.set("v.marketCategoryList", actionResult.getReturnValue());
+        })
+        $A.enqueueAction(action);
     },
     
-    // Called by event aura:doneWaiting
-    hideSpinner: function(component, event, helper) {
-        component.set("v.Spinner", false);
+    getMarketingFamilies: function(component){
+        var action = component.get("c.getMarketFamilyInfo");
+        var marketLine = component.get("v.marketLine");
+        var marketCategory = component.get("v.marketCategory");
+        action.setParams({
+            'marketLine': marketLine,
+            'marketCategory': marketCategory
+        });
+        action.setCallback(this, function(actionResult){
+            component.set("v.marketFamilyList", actionResult.getReturnValue());
+        })
+        $A.enqueueAction(action);
     },
     
-    marketingLineSelected: function(component, event, helper){
-    	var marketingLine = event.getParam('name');
-        component.set("v.marketLine", marketingLine);
-        component.set("v.marketCategory", null);
-        component.set("v.marketFamily", null);
-        
-        console.log("marketingLine" + marketingLine);
-        helper.getMarketingCategories(component);
-        helper.getMarketingFamilies(component);
-        helper.getMarketingProducts(component);
-	},
+    getMarketingProducts: function(component){
+        var action = component.get("c.getMarketProductInfo");
+        var marketLine = component.get("v.marketLine");
+        var marketCategory = component.get("v.marketCategory");
+        var marketFamily = component.get("v.marketFamily");
+        action.setParams({
+            'marketLine': marketLine,
+            'marketCategory': marketCategory,
+            'marketFamily' : marketFamily
+        });
+        action.setCallback(this, function(actionResult){
+            component.set("v.marketProduct", actionResult.getReturnValue());
+        })
+        $A.enqueueAction(action);
+    },
     
-    marketingCategorySelected: function(component, event, helper){
-    	var marketingCategory = event.getParam('name');
-        component.set("v.marketCategory", marketingCategory);
-        component.set("v.marketFamily", null);
-        
-        console.log("marketCategory" + marketingCategory);
-        helper.getMarketingFamilies(component);
-        helper.getMarketingProducts(component);
-	},
+    SearchHelper: function(component, event, helper){
+        var action = component.get("c.fetchProduct");
+        action.setParams({
+            'searchKeyword': component.get("v.searchKeyword")
+        });
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var searchResult = response.getReturnValue();
+                
+                // if reponse is 0, display no record found message
+                if(searchResult.length == 0){
+                    component.set("v.Message", true);
+                } else {
+                    component.set("v.Message", false);
+                }
+                
+                // set searchResult list with return value from server.
+                component.set("v.searchResult", response.getReturnValue());
+            } else if (state === "INCOMPLETE"){
+                alert('Response is Incompleted');
+            } else if (state === "ERROR"){
+                var errors = response.getError();
+                if(errors) {
+                    if(errors[0] && errors[0].message) {
+                        alert("Error message: " + errors[0].message);
+                    } else {
+                        alert("Unknown error");
+                    }
+                }
+            }
+        });
+        $A.enqueueAction(action);
+    },
     
-    marketingFamilySelected: function(component, event, helper){
-    	var marketingFamily = event.getParam('name');
-        component.set("v.marketFamily", marketingFamily);
-        console.log("marketFamily" + marketingFamily);
-        helper.getMarketingProducts(component);
-	}
+    mLFilter: function(component, event, helper){
+        var action = component.get("c.getMLFilteredTable");
+        action.setCallback(this, function(actionResult){
+            component.set("v.marketLine", actionResult.getReturnValue());
+        })
+        $A.enqueueAction(action);
+    },
+    
+    createMarketOptions: function(component, marketOptions, attributeLabel){
+        /*var options;
+        marketOptions.forEach(function (option){
+                              var newOption;
+            newOption.label=option.MasterLabel;
+            newOption.value=option.value;
+            options.push(newOption);
+                              });
+        component.set(attributeLabel, newOptions);*/
+    }
+    
 })
