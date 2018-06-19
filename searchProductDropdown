@@ -1,54 +1,149 @@
 <!-- Product Picker DataTable -->
-<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="searchProductController">
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes" access="global" controller="searchProductController">
  
     <!-- Loading Spinner Handler/Attributes Start -->
     <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
     <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
-    
     <aura:attribute name="Spinner" type="boolean" default="false" />
     <!-- Loading Spinner Handler/Attributes End -->
     
     <!-- Search Bar Handler/Attributes Start -->
-    <aura:handler event="c:SearchKeyChange" action="{!c.searchKeyChange}" />
-    <aura:attribute name="productsLength" type="String" />
+    <aura:attribute name="searchResult" type="List" description="use for store and display product list return from server"/>
+    <aura:attribute name="searchKeyword" type="String" description="use to store user search input"/>
+    <aura:attribute name="Message" type="boolean" default="false" description="use for display no record found message"/>
+    <!-- <aura:handler event="c:SearchKeyChange" action="{!c.searchKeyChange}" /> -->
     <!-- Search Bar Handler/Attributes Stop -->
     
     <!-- Product Picker DataTable Attributes Start -->
-    <aura:handler name="init" action="{!c.doInit}" value="{!this}" />
-    <aura:attribute name="productData" type="List" />
-    <aura:attribute name="tableColumns" type="List" />
-    <aura:attribute name="selectedRows" type="List" />
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}" /> 
+    <aura:handler name="mClick" type="c:mClick" action="{!c.mClick}" />
+    <aura:registerEvent name="mClick" type="c:mClick" /> 
+    <aura:attribute name="marketLine" type="String" />
+    <aura:attribute name="marketLineList" type="List" />
+    <aura:attribute name="marketLineTableColumns" type="List" />
+    <aura:attribute name="marketingLineSelections" type="List" />
+    <aura:attribute name="marketLineOptions" type="List" />
+    <aura:attribute name="mLSelectedRows" type="List" />
+    <aura:attribute name="marketCategory" type="String" />
+    <aura:attribute name="marketCategoryTableColumns" type="List" />
+    <aura:attribute name="marketCategoryList" type="Marketing_Category__mdt[]" />
+    <aura:attribute name="marketCategorySelections" type="List" />
+    <aura:attribute name="mCSelectedRows" type="List" />
+    <aura:attribute name="marketFamily" type="String" />
+    <aura:attribute name="marketFamilyTableColumns" type="List" />
+    <aura:attribute name="marketFamilyList" type="Marketing_Family__mdt[]" />
+    <aura:attribute name="marketFamilySelections" type="List" />
+    <aura:attribute name="mFSelectedRows" type="List" />
+    <aura:attribute name="marketProduct" type="String" />
+    <aura:attribute name="marketProductTableColumns" type="List" />
+    <aura:attribute name="mPSelectedRows" type="List" />
+    <aura:attribute name="maxRowSelection" type="Integer" default="2" />
     <aura:attribute name="enableInfiniteLoading" type="Boolean" default="true"/>
-    <aura:attribute name="rowsToLoad" type="Integer" default="50"/>
-    <aura:attribute name="loadMoreOffset" type="Integer" default="20"/>
-    <aura:attribute name="totalNumberOfRows" type="Integer" default="300"/>
-    <aura:attribute name="loadMoreStatus" type="String" default=""/>
     <!-- Product Picker DataTable Attributes End -->
-    <ltng:require styles="/resource/slds_resource/assets/styles/salesforce-lightning-design-system.css?v=1" />
     
     <!-- Body -->
     <div class="slds">
         <!-- Search Bar Start -->
         <div class="slds-grid">
-            <div class="slds-col slds-align-bottom" style="margin-top: 10px">
-                <input type="text" class="form-control" onchange="{!c.searchKeyChange}" placeholder="Press Enter to Search"/> 
+            <div class="slds-col slds-align-bottom">
+                <input type="text"
+                       value="{!v.searchKeyword}" 
+                       required = "false"
+                       label = "Product Name"
+                       aura:id = "searchField" 
+                       placeholder="Click to Search"/> 
+                <lightning:buttonGroup>
+                	<lightning:button variant="brand" 
+                                      label="Search" 
+                                      title="Search action" 
+                                      onclick = "{!c.Search}"/>
+                </lightning:buttonGroup>
+                <aura:if isTrue="{!v.Message}">
+                    <div class="slds-notify_container slds-is-relative">
+                        <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class = "slds-text-heading_small">No Records Found...</h2>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>
             </div>
         </div>
+        
+        <!-- TABLE CONTENT -->
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <tbody>
+                <aura:iteration items="{!v.searchResult}" var="prod">
+                    <tr>
+                        <td>
+                        	<div class="slds-truncate">{prod.Marketing_Line__c}</div>
+                        </td>
+                        <td>
+                        	<div class="slds-truncate">{prod.Marketing_Category__c}</div>
+                        </td>
+                        <td>
+                        	<div class="slds-truncate">{prod.Marketing_Family__c}</div>
+                        </td>
+                        <td>
+                        	<div class="slds-truncate">{prod.Marketing_Product__c}</div>
+                        </td>
+                    </tr>	            	
+                </aura:iteration>
+            </tbody>
+        </table>
         <!-- Search Bar Stop -->
     	<!-- Product Picker Table Start -->
-        <div class="slds-is-relative">
-            <div style="height: 300px">
-                <lightning:datatable aura:id="productTable" data="{!v.productData}"
-                                     columns="{!v.tableColumns}"
-                                     keyField="Id"
-                                     selectedRows="{!v.selectedRows}"
-                                     onrowaction="{!c.handleAction}"
-                                     enableInfiniteLoading="{! v.enableInfiniteLoading }"
-                                     loadMoreOffset="{! v.loadMoreOffset }"
-                                     onloadmore="{! c.loadMoreData }"
-                                     />
+        <div>
+            <div class="slds-is-relative">
+                <ul class="slds-list_horizontal">
+                    <li class="slds-item">
+                        <lightning:card title="MarketLine">
+                       	 	<lightning:verticalNavigation onselect= "{!c.marketingLineSelected}" shaded="true">
+                            	<lightning:verticalNavigationSection label="">
+                                    <aura:iteration var="item" items="{!v.marketLineList}">
+                                        <lightning:verticalNavigationItem label="{!item.MasterLabel}" name="{!item.MasterLabel}" />
+                                    </aura:iteration>                                
+                                </lightning:verticalNavigationSection>
+                            </lightning:verticalNavigation>
+                        </lightning:card>
+                    </li>
+                    <li class="slds-item">
+                        <lightning:card title="Marketing Category">
+                            <lightning:verticalNavigation onselect= "{!c.marketingCategorySelected}">
+                            	<lightning:verticalNavigationSection label="">
+                                    <aura:iteration var="item" items="{!v.marketCategoryList}">
+                                        <lightning:verticalNavigationItem label="{!item.MasterLabel}" name="{!item.MasterLabel}" />
+                                    </aura:iteration>                                
+                                </lightning:verticalNavigationSection>
+                            </lightning:verticalNavigation>
+                        </lightning:card>
+                    </li>
+                    <li class="slds-item">
+                        <lightning:card title="Marketing Family">
+                             <lightning:verticalNavigation onselect= "{!c.marketingFamilySelected}">
+                            	<lightning:verticalNavigationSection label="">
+                                    <aura:iteration var="item" items="{!v.marketFamilyList}">
+                                        <lightning:verticalNavigationItem label="{!item.MasterLabel}" name="{!item.MasterLabel}" />
+                                    </aura:iteration>                                
+                                </lightning:verticalNavigationSection>
+                            </lightning:verticalNavigation>
+                        </lightning:card>
+                    </li>
+                    <li class="slds-item">
+                        <lightning:card title="Marketing Product">
+                            <aura:set attribute="actions">
+                                <lightning:button label="To Socket" onclick="{!c.toSocket}"/>
+                            </aura:set>
+                            <lightning:datatable aura:id="marketProductTable" data="{!v.marketProduct}"
+                                                 columns="{!v.marketProductTableColumns}"
+                                                 keyField="Id"
+                                                 onrowaction="{!c.filterAction}"
+                                                 onrowselection="{!c.updateSelectedText}"
+                                                 />
+                        </lightning:card>
+                    </li>
+                </ul>
             </div>            
-            {!v.loadMoreStatus}
         </div>
         <!-- Product Picker Table Stop -->
         <!-- Loading Spinner Start -->
