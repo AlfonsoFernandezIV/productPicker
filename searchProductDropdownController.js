@@ -29,38 +29,6 @@
             helper.SearchHelper(component, event, helper);
     },
     
-    mClick: function(component, event, helper){
-        var getSource = event.getSource().getLocalId();
-        if(getSource == "mLinButton"){
-            var mLSelectedRows = event.getParam('mLSelectedRows');
-            var setRows = [];
-            for(var i = 0; i < mLSelectedRows.length(); i++){
-                setRows.push(mLSelectedRows[i].Id);
-            }
-        } else if (getSource == "mCatButton"){
-            var mCSelectedRows = event.getParam('mCSelectedRows');
-            var setRows = [];
-            for(var i = 0; i < mCSelectedRows.length(); i++){
-                setRows.push(mCSelectedRows[i].Id);
-            }
-        } else if (getSource == "mFamButton"){
-            var mFSelectedRows = event.getParam('mFSelectedRows');
-            var setRows = [];
-            for(var i = 0; i < mFSelectedRows.length(); i++){
-                setRows.push(mFSelectedRows[i].Id);
-            }
-        } else {
-            var mPSelectedRows = event.getParam('mPSelectedRows');
-            var setRows = [];
-            for(var i = 0; i < mPSelectedRows.length(); i++){
-                setRows.push(mPSelectedRows[i].Id);
-            }
-        }
-        console.log(setRows);
-        console.log(getSource);
-        helper.mLFilter(component, event, helper);
-    },
-    
     // Called by event aura:waiting
     showSpinner: function(component, event, helper) {
         // make Spinner attribute true for display Spinner
