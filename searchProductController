@@ -1,0 +1,102 @@
+public class searchProductController {
+ 
+    @AuraEnabled
+    public static List<Marketing_Line__mdt> getMarketLineInfo(){
+        
+        return [SELECT MasterLabel FROM Marketing_Line__mdt ORDER BY MasterLabel];
+    }
+
+    
+    @AuraEnabled
+    public static List<Marketing_Category__mdt> getMarketCategoryInfo(String marketLine){
+        System.debug('This is marketLine Param: ' + marketLine);
+        if(marketLine != null){
+        	return [SELECT MasterLabel FROM Marketing_Category__mdt WHERE Related_Marketing_Line__c = :marketLine ORDER BY MasterLabel];
+        } else {
+            return [SELECT MasterLabel FROM Marketing_Category__mdt ORDER BY MasterLabel LIMIT 10];
+        }
+    }
+
+    @AuraEnabled
+    public static List<Marketing_Family__mdt> getMarketFamilyInfo(String marketLine, String marketCategory){
+        String stmt = 'SELECT MasterLabel FROM Marketing_Family__mdt';
+        String whereStmt = '';
+        String limitStmt = ' Limit 10';
+        String orderStmt = ' ORDER BY MasterLabel';
+        Boolean whereStarted = false;
+        
+        if(marketLine != null || marketCategory != null){
+         	whereStmt += ' WHERE ';   
+            if(marketLine != null){
+                whereStmt += ' Related_Marketing_Line__c = :marketLine';
+                whereStarted = true;
+            } 
+            if(marketCategory != null){
+                if(whereStarted){
+                    whereStmt += ' AND ';
+                } else {
+                    limitStmt = '';
+                }
+                whereStmt += ' Related_Marketing_Category__c = :marketCategory';
+            }      
+        }
+        stmt += whereStmt + orderStmt + limitStmt;
+        System.debug('Family stmt: ' + stmt);
+        return Database.query(stmt);
+    }
+
+    @AuraEnabled
+    public static List<Product2> getMarketProductInfo(String marketLine, String marketCategory, String marketFamily){
+        String stmt = 'SELECT Name FROM Product2';
+        String whereStmt = '';
+        String limitStmt = ' Limit 10';
+        String orderStmt = ' ORDER BY Name';
+        Integer whereCount = 0;
+        
+        if(marketLine != null || marketCategory != null || marketFamily != null){
+         	whereStmt += ' WHERE ';   
+            if(marketLine != null){
+                whereStmt += ' Marketing_Line__c =:marketLine';
+                whereCount ++;
+            } 
+            if(marketCategory != null){
+                if(whereCount > 0){
+                    whereStmt += ' AND ';
+                } 
+                whereStmt += ' Marketing_Category__c = :marketCategory';
+                whereCount ++;
+            }
+            if(marketFamily != null){
+                if(whereCount > 0){
+                    whereStmt += ' AND ';
+                } 
+                whereStmt += ' Marketing_Family__c = :marketFamily';
+                whereCount ++;
+            }
+        }
+        if(whereCount == 3){
+            limitStmt = '';
+        }
+        
+        stmt += whereStmt + orderStmt + limitStmt;
+        return Database.query(stmt);
+    }
+
+    @AuraEnabled
+    public static List<Product2> fetchProduct(String searchKeyword){
+        System.debug('Search Keyword is : ' + searchKeyword);
+        String searchKey = '%' + searchKeyword + '%';
+        System.debug('Search Key is : ' + searchKey);
+        List<Product2> returnList = new List<Product2>();
+        List<Product2> lstOfProducts = [SELECT Marketing_Line__c , Marketing_Category__c , Marketing_Family__c , Name 
+                                        FROM Product2 WHERE Name LIKE: searchKey 
+                                        OR Marketing_Line__c  LIKE: searchKey 
+                                        OR Marketing_Category__c  LIKE: searchKey 
+                                        OR Marketing_Family__c  LIKE: searchKey
+                                        LIMIT 200];	
+        for(Product2 prod: lstOfProducts){
+            returnList.add(prod);
+        }
+        return returnList;
+    }
+}
