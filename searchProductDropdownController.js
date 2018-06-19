@@ -88,23 +88,4 @@
         $A.enqueueAction(action);
     },
     
-    mLFilter: function(component, event, helper){
-        var action = component.get("c.getMLFilteredTable");
-        action.setCallback(this, function(actionResult){
-            component.set("v.marketLine", actionResult.getReturnValue());
-        })
-        $A.enqueueAction(action);
-    },
-    
-    createMarketOptions: function(component, marketOptions, attributeLabel){
-        /*var options;
-        marketOptions.forEach(function (option){
-                              var newOption;
-            newOption.label=option.MasterLabel;
-            newOption.value=option.value;
-            options.push(newOption);
-                              });
-        component.set(attributeLabel, newOptions);*/
-    }
-    
 })
